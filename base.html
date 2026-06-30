@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Attendance System</title>
+    <!-- Bootstrap 5 CSS via CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Custom UI Overhaul Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        /* Navbar Glass Effect */
+        .navbar-glass {
+            background: rgba(255, 255, 255, 0.8) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        .navbar-glass .navbar-brand {
+            color: #0f172a !important;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light navbar-glass mb-4 sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/" style="letter-spacing: 0.5px;">
+                <i class="bi bi-geo-alt-fill text-warning me-1"></i> QR Attendance
+            </a>
+            
+            {% if session.get('user') %}
+            <button class="navbar-toggler border-0 shadow-none px-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            {% endif %}
+
+            <div class="collapse navbar-collapse justify-content-end" id="navbarMain">
+                <div class="d-flex align-items-center mt-3 mt-lg-0 gap-2">
+                    {% if session.get('user') %}
+                        <span class="badge bg-white text-primary py-2 px-3 shadow-sm rounded-pill font-monospace" style="font-size: 0.85rem;">
+                            <i class="bi bi-person-circle me-1"></i> {{ session.get('user') }}
+                        </span>
+                        <a href="{{ url_for('logout') }}" class="btn btn-light text-danger btn-sm rounded-pill fw-bold px-4 shadow-sm hover-lift">
+                            <i class="bi bi-box-arrow-right me-1"></i>Logout
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="container main-container px-3 px-md-4">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show rounded-4 shadow-sm mb-4 border-0 d-flex align-items-center" role="alert">
+                {% if category == 'success' %}
+                <i class="bi bi-check-circle-fill me-3 fs-4"></i>
+                {% else %}
+                <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                {% endif %}
+                <div class="fw-bold">{{ message }}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

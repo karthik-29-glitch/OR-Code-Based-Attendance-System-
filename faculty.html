@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12 text-center">
+        <h2 class="fw-bold text-dark">Faculty Dashboard</h2>
+        <p class="text-muted">Generate a QR code for students to scan. Ensure location services are enabled.</p>
+    </div>
+</div>
+
+<div class="row justify-content-center px-2">
+    <div class="col-12 col-md-10 col-lg-7 col-xl-6">
+        <div class="card shadow-soft border-0 p-3 p-md-4 text-center animate-fade-in glass-panel card-compact">
+            <div class="text-start mb-4 p-3 rounded-4 border bg-white shadow-sm d-flex flex-column gap-2">
+                <label class="form-label fw-bold text-dark mb-1"><i class="bi bi-book-half text-primary me-2"></i>Select Course <span class="text-danger">*</span></label>
+                <select id="subjectSelect" class="form-select border-0 bg-light shadow-sm py-2 px-3 fw-semibold text-secondary" style="border-radius: 0.75rem;">
+                    <option value="" selected disabled>-- Choose Course --</option>
+                    <option value="Machine Learning">Machine Learning</option>
+                    <option value="Mobile App Development">Mobile App Development</option>
+                    <option value="Electronic Circuit Design">Electronic Circuit Design</option>
+                    <option value="Software Testing">Software Testing</option>
+                    <option value="Data Analytics">Data Analytics</option>
+                    <option value="Other">Other (Type below)</option>
+                </select>
+                <div id="customSubjectDiv" class="mt-2 d-none w-100">
+                    <input type="text" id="customSubject" class="form-control border-0 bg-light shadow-sm py-2 px-3 w-100" style="border-radius: 0.75rem;" placeholder="e.g. Artificial Intelligence" maxlength="50">
+                </div>
+            </div>
+
+            <div id="statusAlert" class="alert d-none" role="alert"></div>
+            
+            <div class="mb-4">
+                <button id="generateBtn" class="btn btn-primary btn-lg w-100 fw-bold shadow-sm py-3 px-2 hover-lift text-wrap" style="font-size: clamp(0.9rem, 2vw, 1.1rem);">
+                    📍 Capture Location & Generate QR
+                </button>
+            </div>
+
+            <div id="qrContainer" class="d-none mt-3 mt-md-4 animate-fade-in">
+                <h5 class="mb-2 text-success fw-bold">Active Lecture: <span id="displayId" class="text-muted small"></span></h5>
+                <div class="bg-primary text-white rounded-pill px-3 px-md-4 py-2 d-inline-block fw-bold mb-4 shadow-sm text-truncate" style="letter-spacing: 0.5px; max-width: 100%;">
+                    <i class="bi bi-journal-bookmark-fill me-2"></i><span id="displaySubject"></span>
+                </div>
+                
+                <!-- QRCode.js Library will inject canvas/img here -->
+                <div class="position-relative d-inline-block w-100" style="max-width: 400px;">
+                    <div class="position-absolute top-50 start-50 translate-middle w-100 h-100 rounded-4" style="background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, transparent 80%); transform: scale(1.4); z-index: 0; pointer-events: none;"></div>
+                    <div class="bg-white p-3 d-inline-block rounded-4 shadow-soft border border-2 position-relative w-100 overflow-hidden d-flex justify-content-center" style="z-index: 1;">
+                        <div id="qrcode"></div>
+                    </div>
+                </div>
+
+                <div class="mt-4 px-2">
+                    <p class="text-danger fw-bold mb-1"><i class="bi bi-shield-lock-fill"></i> Dynamic Anti-Cheat QR</p>
+                    <p class="text-muted small mb-2">QR code auto-refreshes every 10 seconds to stop proxy cheating.</p>
+                    <div class="progress mb-3 mx-auto" style="height: 6px; width: 100%; max-width: 80%;">
+                        <div id="timerBar" class="progress-bar bg-danger" role="progressbar" style="width: 100%;"></div>
+                    </div>
+                    <p id="locationDisplay" class="text-secondary small font-monospace text-wrap text-break mb-0"></p>
+                </div>
+            </div>
+            
+            <hr class="my-4">
+            
+            <div class="mt-3 text-center">
+                <button type="button" class="btn btn-outline-dark fw-bold rounded-pill px-3 py-2 shadow-sm hover-lift w-100 text-wrap" style="max-width: 300px; font-size: 0.95rem;" data-bs-toggle="modal" data-bs-target="#adminModal">
+                    <i class="bi bi-bar-chart-fill text-primary me-2"></i> View Analytics Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Admin Password Modal -->
+<div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header bg-dark text-white rounded-top-4 border-0">
+        <h5 class="modal-title fw-bold" id="adminModalLabel"><i class="bi bi-file-lock2-fill me-2 text-warning"></i>Security Check</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ url_for('analytics_dashboard') }}" method="POST">
+          <div class="modal-body p-4 text-start">
+            <p class="text-muted mb-4">The Analytics Dashboard contains sensitive global attendance records. Please verify your administrative clearance to proceed.</p>
+            <div class="mb-2">
+                <label for="admin_password" class="form-label text-dark fw-bold">
+                    <i class="bi bi-key-fill text-warning me-2"></i>Admin Password
+                </label>
+                <input type="password" class="form-control py-3" id="admin_password" name="admin_password" placeholder="Enter Admin Password" required style="border-color: #ffc107; border-radius: 0.85rem;">
+            </div>
+          </div>
+          <div class="modal-footer border-0 p-4 pt-0">
+            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold shadow">Unlock Dashboard <i class="bi bi-unlock-fill ms-2"></i></button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div id="backendFlags" class="d-none" data-has-error="{{ 'true' if error else 'false' }}" data-error-msg="{{ error }}" data-show-modal="{{ 'true' if show_admin_modal else 'false' }}"></div>
+{% endblock %}
+
+{% block scripts %}
+<!-- QRCode.js Library via CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+    // Handle Subject Toggling
+    const subjectSelect = document.getElementById('subjectSelect');
+    const customSubjectDiv = document.getElementById('customSubjectDiv');
+    const customSubjectInput = document.getElementById('customSubject');
+
+    subjectSelect.addEventListener('change', (e) => {
+        if(e.target.value === 'Other') {
+            customSubjectDiv.classList.remove('d-none');
+            customSubjectInput.focus();
+        } else {
+            customSubjectDiv.classList.add('d-none');
+            customSubjectInput.value = '';
+        }
+    });
+
+    // Show modal automatically if backend passed error
+    const flags = document.getElementById('backendFlags');
+    if (flags && flags.getAttribute('data-has-error') === 'true' && flags.getAttribute('data-show-modal') === 'true') {
+        var myModal = new bootstrap.Modal(document.getElementById('adminModal'));
+        myModal.show();
+        showAlert(document.getElementById('statusAlert'), `<strong>Access Denied:</strong> ${flags.getAttribute('data-error-msg')}`, 'danger');
+    }
+
+    document.getElementById('generateBtn').addEventListener('click', async () => {
+        let finalSubject = subjectSelect.value;
+        if (finalSubject === 'Other') finalSubject = customSubjectInput.value.trim();
+        
+        if (!finalSubject) {
+            showAlert(document.getElementById('statusAlert'), `<strong>Missing Information:</strong> Please select or type the subject name before generating the QR code.`, 'warning');
+            return;
+        }
+
+        const btn = document.getElementById('generateBtn');
+        const alertBox = document.getElementById('statusAlert');
+        
+        // Hide previous alerts
+        alertBox.classList.add('d-none');
+        
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Fetching GPS Location...';
+        
+        try {
+            // Get faculty GPS coordinates
+            const pos = await getCurrentLocation();
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            
+            // Register lecture with the backend
+            const res = await fetch('/api/create_lecture', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lat, lng, subject: finalSubject })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                // Formatting UI
+                document.getElementById('qrContainer').classList.remove('d-none');
+                btn.classList.add('d-none'); // Hide the capture button
+                
+                const currentLectureId = data.lecture_id;
+                document.getElementById('displayId').innerText = currentLectureId.split('-')[0].toUpperCase();
+                document.getElementById('displaySubject').innerText = data.subject;
+                document.getElementById('locationDisplay').innerText = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+                
+                // Dynamic QR Code Rendering Loop
+                const qrcodeContainer = document.getElementById('qrcode');
+                let qrCodeObj = null;
+                
+                const refreshQR = async () => {
+                    const qrRes = await fetch(`/api/get_qr_payload/${currentLectureId}`);
+                    const qrData = await qrRes.json();
+                    
+                    if(qrData.success) {
+                        qrcodeContainer.innerHTML = ''; // Clear existing
+                        qrCodeObj = new QRCode(qrcodeContainer, {
+                            text: qrData.qr_data,
+                            width: 400,
+                            height: 400,
+                            colorDark : "#000000",
+                            colorLight : "#ffffff",
+                            correctLevel : QRCode.CorrectLevel.H
+                        });
+                        
+                        // Reset progress bar animation
+                        const timerBar = document.getElementById('timerBar');
+                        timerBar.style.transition = 'none';
+                        timerBar.style.width = '100%';
+                        setTimeout(() => {
+                            timerBar.style.transition = 'width 10s linear';
+                            timerBar.style.width = '0%';
+                        }, 50);
+                    }
+                };
+                
+                // Initial generation & loop
+                await refreshQR();
+                setInterval(refreshQR, 10000);
+            } else {
+                showAlert(alertBox, `<strong>Error:</strong> ${data.error}`, 'danger');
+                btn.disabled = false;
+                btn.innerText = '📍 Capture Location & Generate QR';
+            }
+            
+        } catch (error) {
+            let msg = error.message;
+            if (error.code === 1) msg = "Location Access Denied. Please allow location permissions in your browser to proceed.";
+            
+            showAlert(alertBox, `<strong>GPS Error:</strong> ${msg}`, 'danger');
+            btn.disabled = false;
+            btn.innerText = '📍 Capture Location & Generate QR';
+        }
+    });
+</script>
+{% endblock %}
